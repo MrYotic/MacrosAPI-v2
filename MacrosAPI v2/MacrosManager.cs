@@ -110,7 +110,7 @@ namespace MacrosAPI_v2
             Interception.DestroyContext(context);
             foreach (Macros p in plugins)
             {
-                PluginUnLoad(p);
+                UnLoadMacros(p);
             }
         }
         private readonly Dictionary<string, List<Macros>> registeredPluginsPluginChannels = new Dictionary<string, List<Macros>>();
@@ -152,7 +152,7 @@ namespace MacrosAPI_v2
         public Action OnUnloadPlugin { set; get; }
         public Action<object> OnMacrosPostObject { set; get; }
         public Action<Macros> OnMacrosLoad { set; get; }
-        public void OnPluginPostObjectMethod(object ob)
+        public void OnMacrosPostObjectMethod(object ob)
         {
             if (OnMacrosPostObject != null)
             {
@@ -163,7 +163,7 @@ namespace MacrosAPI_v2
         #endregion
 
         #region Управление плагином
-        public void PluginLoad(Macros b, bool init = true)
+        public void LoadMacros(Macros b, bool init = true)
         {
             b.SetHandler(this);
             plugins.Add(b);
@@ -180,7 +180,7 @@ namespace MacrosAPI_v2
             }
         }
 
-        public bool OnKeyDown(Key key, bool repeat)
+        private bool OnKeyDown(Key key, bool repeat)
         {
             foreach (Macros macros in plugins.ToArray())
             {
@@ -189,7 +189,7 @@ namespace MacrosAPI_v2
             }
             return false;
         }
-        public bool OnKeyUp(Key key)
+        private bool OnKeyUp(Key key)
         {
             foreach (Macros macros in plugins.ToArray())
             {
@@ -199,7 +199,7 @@ namespace MacrosAPI_v2
             return false;
         }
 
-        public void PluginPostObject(Macros m, object obj)
+        public void MacrosPostObject(Macros m, object obj)
         {
             foreach (Macros macros in plugins.ToArray())
             {
@@ -207,7 +207,7 @@ namespace MacrosAPI_v2
                 catch { }
             }
         }
-        public void PluginUnLoad(Macros m)
+        public void UnLoadMacros(Macros m)
         {
             plugins.RemoveAll(item => object.ReferenceEquals(item, m));
 

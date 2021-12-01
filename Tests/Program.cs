@@ -22,7 +22,7 @@ namespace Tests
                 Console.WriteLine("Драйвер установлен");
                 Console.ForegroundColor = ConsoleColor.Gray;
 
-                manager.PluginLoad(new Test());
+                manager.LoadMacros(new Test());
             }
             else
             {

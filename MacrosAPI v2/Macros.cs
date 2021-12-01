@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using DeviceID = System.Int32;
+using KeyList = System.Collections.Generic.List<Key>;
+
 
 namespace MacrosAPI_v2
 {
@@ -30,11 +32,11 @@ namespace MacrosAPI_v2
         #region Загрузка и выгрузка плагина
         protected void LoadPlugin(Macros bot)
         {
-            Handler.PluginUnLoad(bot); Handler.PluginLoad(bot);
+            Handler.UnLoadMacros(bot); Handler.LoadMacros(bot);
         }
         protected void UnLoadPlugin(Macros bot)
         {
-            Handler.PluginUnLoad(bot);
+            Handler.UnLoadMacros(bot);
 
             if (Handler.OnUnloadPlugin != null)
             {
@@ -47,7 +49,7 @@ namespace MacrosAPI_v2
         }
         protected void RunScript(FileInfo filename)
         {
-            Handler.PluginLoad(new Script(filename));
+            Handler.LoadMacros(new Script(filename));
         }
         #endregion
 
@@ -64,20 +66,43 @@ namespace MacrosAPI_v2
         #endregion
 
         #region Методы плагина
+        protected bool IsKeyDown(DeviceID deviceID, Key key)
+        {
+            KeyList deviceDownedKeys;
+            if (!Handler.downedKeys.TryGetValue(deviceID, out deviceDownedKeys))
+                return false;
+            return deviceDownedKeys.Contains(key);
+        }
+
+        protected bool IsKeyDown(Key key)
+        {
+            return IsKeyDown(Handler.currentDeviceID, key);
+        }
+
+        protected bool IsKeyUp(DeviceID deviceID, Key key)
+        {
+            return !IsKeyDown(deviceID, key);
+        }
+
+        protected bool IsKeyUp(Key key)
+        {
+            return IsKeyUp(Handler.currentDeviceID, key);
+        }
+
 
         protected void KeyDown(DeviceID deviceID, params Key[] keys)
         {
             foreach (Key key in keys)
             {
                 Interception.Stroke stroke = new Interception.Stroke();
-                stroke.Key = _handler.ToKeyStroke(key, true);
-                Interception.Send(_handler.context, deviceID, ref stroke, 1);
+                stroke.Key = Handler.ToKeyStroke(key, true);
+                Interception.Send(Handler.context, deviceID, ref stroke, 1);
             }
         }
 
         protected void KeyDown(params Key[] keys)
         {
-            KeyDown(_handler.currentDeviceID, keys);
+            KeyDown(Handler.currentDeviceID, keys);
         }
 
         protected void KeyUp(DeviceID deviceID, params Key[] keys)
@@ -85,20 +110,20 @@ namespace MacrosAPI_v2
             foreach (Key key in keys)
             {
                 Interception.Stroke stroke = new Interception.Stroke();
-                stroke.Key = _handler.ToKeyStroke(key, false);
-                Interception.Send(_handler.context, deviceID, ref stroke, 1);
+                stroke.Key = Handler.ToKeyStroke(key, false);
+                Interception.Send(Handler.context, deviceID, ref stroke, 1);
             }
         }
 
         protected void KeyUp(params Key[] keys)
         {
-            KeyUp(_handler.currentDeviceID, keys);
+            KeyUp(Handler.currentDeviceID, keys);
         }
 
 
         protected void PluginPostObject(object obj)
         {
-            Handler.OnPluginPostObjectMethod(obj);
+            Handler.OnMacrosPostObjectMethod(obj);
         }
         #endregion
     }
