@@ -10,14 +10,6 @@ namespace MacrosAPI_v2
     public abstract class Macros
     {
         #region Системное
-        [Flags]
-        private enum MouseFlags
-        {
-            Move = 0x0001, LeftDown = 0x0002, LeftUp = 0x0004, RightDown = 0x0008,
-            RightUp = 0x0010, Absolute = 0x8000
-        };
-        [DllImport("User32.dll")]
-        private static extern void mouse_event(MouseFlags dwFlags, int dx, int dy, int dwData, UIntPtr dwExtraInfo);
         private MacrosManager _handler = null;
         private MacrosManager Handler
         {
@@ -138,39 +130,81 @@ namespace MacrosAPI_v2
         #endregion
 
         
-        protected void RightDown()
+        protected void MouseDown(DeviceID deviceID, params MouseKey[] keys)
         {
-            mouse_event(MouseFlags.RightDown, 0, 0, 0, UIntPtr.Zero);
+            foreach (MouseKey key in keys)
+            {
+                Interception.Stroke stroke = new Interception.Stroke();
+                switch (key)
+                {
+                    case (MouseKey.Left):
+                        stroke.Mouse.State = Interception.MouseState.LeftButtonDown;
+                        break;
+                    case (MouseKey.Right):
+                        stroke.Mouse.State = Interception.MouseState.RightButtonDown;
+                        break;
+                    case (MouseKey.Middle):
+                        stroke.Mouse.State = Interception.MouseState.MiddleButtonDown;
+                        break;
+                    case (MouseKey.Button1):
+                        stroke.Mouse.State = Interception.MouseState.Button4Down;
+                        break;
+                    case (MouseKey.Button2):
+                        stroke.Mouse.State = Interception.MouseState.Button5Down;
+                        break;
+                }    
+                Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
+            }
         }
-        protected void RightUp()
+
+        protected void MouseUp(DeviceID deviceID, params MouseKey[] keys)
         {
-            mouse_event(MouseFlags.RightUp, 0, 0, 0, UIntPtr.Zero);
+            foreach (MouseKey key in keys)
+            {
+                Interception.Stroke stroke = new Interception.Stroke();
+                switch (key)
+                {
+                    case (MouseKey.Left):
+                        stroke.Mouse.State = Interception.MouseState.LeftButtonUp;
+                        break;
+                    case (MouseKey.Right):
+                        stroke.Mouse.State = Interception.MouseState.RightButtonUp;
+                        break;
+                    case (MouseKey.Middle):
+                        stroke.Mouse.State = Interception.MouseState.MiddleButtonUp;
+                        break;
+                    case (MouseKey.Button1):
+                        stroke.Mouse.State = Interception.MouseState.Button4Up;
+                        break;
+                    case (MouseKey.Button2):
+                        stroke.Mouse.State = Interception.MouseState.Button5Up;
+                        break;
+                }
+                Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
+            }
         }
-        protected void LeftDown()
+
+        protected void MouseMove(DeviceID deviceID, int x, int y)
         {
-            mouse_event(MouseFlags.LeftDown, 0, 0, 0, UIntPtr.Zero);
+            Interception.Stroke stroke = new Interception.Stroke();
+            stroke.Mouse.X = x;
+            stroke.Mouse.Y = y;
+            Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
         }
-        protected void LeftUp()
+
+        protected void MouseDown(params MouseKey[] keys)
         {
-            mouse_event(MouseFlags.LeftUp, 0, 0, 0, UIntPtr.Zero);
+            MouseDown(Handler.mouseDeviceID, keys);
         }
-        protected void RightClick()
+
+        protected void MouseUp(params MouseKey[] keys)
         {
-            mouse_event(MouseFlags.RightDown | MouseFlags.RightUp, 0, 0, 0, UIntPtr.Zero);
+            MouseUp(Handler.mouseDeviceID, keys);
         }
-        protected void RightClick(int delay)
-        {
-            RightDown();
-            System.Threading.Thread.Sleep(delay);
-            RightUp();
-        }
+
         protected void MouseMove(int x, int y)
         {
-            mouse_event(MouseFlags.Move, x, y, 0, UIntPtr.Zero);
-        }
-        protected void AbsoluteMouseMove(int x, int y)
-        {
-            mouse_event(MouseFlags.Move | MouseFlags.Absolute, x, y, 0, UIntPtr.Zero);
+            MouseMove(Handler.mouseDeviceID, x, y);
         }
 
         protected void PluginPostObject(object obj)

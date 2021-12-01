@@ -44,6 +44,14 @@ namespace Tests
 
         public override bool OnKeyDown(Key key, bool repeat)
         {
+            switch (key)
+            {
+                case Key.R:
+                    MouseMove(100, 100);
+                    //MouseDown(MouseKey.Left);
+                    //MouseUp(MouseKey.Left);
+                    return true;
+            }
             return false;
         }
         public override bool OnMouseMove(int x, int y)

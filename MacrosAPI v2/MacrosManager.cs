@@ -67,15 +67,25 @@ namespace MacrosAPI_v2
         public void DriverUpdater()
         {
             DeviceID keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
-            if (keyboardDeviceIDdeviceID != 0)
+            switch (keyboardDeviceIDdeviceID)
             {
-                keyboardDeviceID = keyboardDeviceIDdeviceID;
-            }
+                case (0):
+
+                    break;
+                default:
+                    keyboardDeviceID = keyboardDeviceIDdeviceID;
+                    break;
+            }    
 
             DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
-            if (mousedeviceID != 0)
+            switch (mousedeviceID)
             {
-                mouseDeviceID = mousedeviceID;
+                case (0):
+
+                    break;
+                default:
+                    mouseDeviceID = mousedeviceID;
+                    break;
             }
 
             Interception.Stroke stroke = new Interception.Stroke();
@@ -109,7 +119,7 @@ namespace MacrosAPI_v2
 
             while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
             {
-                bool processed = false;
+                bool processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
 
                 switch (stroke.Mouse.State)
                 {
@@ -146,8 +156,6 @@ namespace MacrosAPI_v2
                         processed = OnMouseUp(MouseKey.Button2);
                         break;
                 }
-
-                processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
 
                 if (!processed)
                     Interception.Send(mouse, mousedeviceID, ref stroke, 1);
