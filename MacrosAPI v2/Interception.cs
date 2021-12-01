@@ -359,6 +359,8 @@ public static class Interception
     //int INTERCEPTION_API interception_is_keyboard(InterceptionDevice device);
     [DllImport("interception.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "interception_is_keyboard")]
     public static extern int IsKeyboard(InterceptionDevice deviceID);
+    [DllImport("interception.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "interception_is_mouse")]
+    public static extern int IsMouse(InterceptionDevice deviceID);
 
     //int INTERCEPTION_API interception_is_mouse(InterceptionDevice device);
 

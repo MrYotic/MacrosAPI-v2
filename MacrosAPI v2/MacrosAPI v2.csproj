@@ -65,6 +65,7 @@
     <Compile Include="MacrosLoader.cs" />
     <Compile Include="MacrosManager.cs" />
     <Compile Include="MacrosUpdater.cs" />
+    <Compile Include="MouseKey.cs" />
     <Compile Include="Plugins\Script.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

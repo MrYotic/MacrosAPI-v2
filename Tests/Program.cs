@@ -31,8 +31,6 @@ namespace Tests
                 Console.ForegroundColor = ConsoleColor.Gray;
             }
         }
-
-
     }
 
     class Test : Macros
@@ -46,14 +44,20 @@ namespace Tests
 
         public override bool OnKeyDown(Key key, bool repeat)
         {
-            if (key == Key.R)
-            {
-                KeyDown(Key.A);
-                KeyUp(Key.A);
-
-                return true;
-            }
-
+            return false;
+        }
+        public override bool OnMouseMove(int x, int y)
+        {
+            return false;
+        }
+        public override bool OnMouseDown(MouseKey key)
+        {
+            Console.WriteLine("Клавиша: " + key + " нажата");
+            return false;
+        }
+        public override bool OnMouseUp(MouseKey key)
+        {
+            Console.WriteLine("Клавиша: " + key + " отжата");
             return false;
         }
     }

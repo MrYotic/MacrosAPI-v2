@@ -10,15 +10,20 @@ namespace MacrosAPI_v2
 {
     public class MacrosManager
     {
-        public IntPtr context;
-        public DeviceID currentDeviceID = 1;
+        public IntPtr keyboard;
+        public IntPtr mouse;
+
+        public DeviceID keyboardDeviceID = 1;
+        public DeviceID mouseDeviceID = 1;
 
         public Dictionary<DeviceID, KeyList> downedKeys = new Dictionary<DeviceID, KeyList>();
 
         public MacrosManager(MacrosUpdater updater)
         {
-            context = Interception.CreateContext();
-            Interception.SetFilter(context, Interception.IsKeyboard, Interception.Filter.All);
+            keyboard = Interception.CreateContext();
+            mouse = Interception.CreateContext();
+            Interception.SetFilter(keyboard, Interception.IsKeyboard, Interception.Filter.All);
+            Interception.SetFilter(mouse, Interception.IsMouse, Interception.Filter.All);
 
             updater.SetHandler(this);
             updater.StartUpdater();
@@ -59,29 +64,27 @@ namespace MacrosAPI_v2
 
             return result;
         }
-        private bool showKeys = false;
         public void DriverUpdater()
         {
-            DeviceID deviceID = Interception.WaitWithTimeout(context, 0);
-            if (deviceID != 0)
+            DeviceID keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
+            if (keyboardDeviceIDdeviceID != 0)
             {
-                currentDeviceID = deviceID;
-
-                
+                keyboardDeviceID = keyboardDeviceIDdeviceID;
             }
-            Interception.Stroke stroke = new Interception.Stroke();
 
-            while (Interception.Receive(context, deviceID, ref stroke, 1) > 0)
+            DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
+            if (mousedeviceID != 0)
+            {
+                mouseDeviceID = mousedeviceID;
+            }
+
+            Interception.Stroke stroke = new Interception.Stroke();
+            while (Interception.Receive(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1) > 0)
             {
                 Key key = ToKey(stroke.Key);
+                bool processed = false;
 
-                if (showKeys)
-                    Console.WriteLine("Key: {0}; Scancode: 0x{1:X2}; State: {2}", key, stroke.Key.Code, stroke.Key.State);
-
-                bool processed;
-
-                KeyList deviceDownedKeys = GetOrCreateKeyList(downedKeys, deviceID);
-
+                KeyList deviceDownedKeys = GetOrCreateKeyList(downedKeys, keyboardDeviceIDdeviceID);
                 if (stroke.Key.State.IsKeyDown())
                 {
                     if (!deviceDownedKeys.Contains(key))
@@ -101,13 +104,59 @@ namespace MacrosAPI_v2
                 }
 
                 if (!processed)
-                    Interception.Send(context, deviceID, ref stroke, 1);
+                    Interception.Send(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1);
+            }
+
+            while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
+            {
+                bool processed = false;
+
+                switch (stroke.Mouse.State)
+                {
+                    case (Interception.MouseState.LeftButtonDown):
+                        processed = OnMouseDown(MouseKey.Left);
+                        break;
+                    case (Interception.MouseState.RightButtonDown):
+                        processed = OnMouseDown(MouseKey.Right);
+                        break;
+                    case (Interception.MouseState.MiddleButtonDown):
+                        processed = OnMouseDown(MouseKey.Middle);
+                        break;
+                    case (Interception.MouseState.Button4Down):
+                        processed = OnMouseDown(MouseKey.Button1);
+                        break;
+                    case (Interception.MouseState.Button5Down):
+                        processed = OnMouseDown(MouseKey.Button2);
+                        break;
+
+
+                    case (Interception.MouseState.LeftButtonUp):
+                        processed = OnMouseUp(MouseKey.Left);
+                        break;
+                    case (Interception.MouseState.RightButtonUp):
+                        processed = OnMouseUp(MouseKey.Right);
+                        break;
+                    case (Interception.MouseState.MiddleButtonUp):
+                        processed = OnMouseUp(MouseKey.Middle);
+                        break;
+                    case (Interception.MouseState.Button4Up):
+                        processed = OnMouseUp(MouseKey.Button1);
+                        break;
+                    case (Interception.MouseState.Button5Up):
+                        processed = OnMouseUp(MouseKey.Button2);
+                        break;
+                }
+
+                processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
+
+                if (!processed)
+                    Interception.Send(mouse, mousedeviceID, ref stroke, 1);
             }
         }
 
         public void Quit()
         {
-            Interception.DestroyContext(context);
+            Interception.DestroyContext(keyboard);
             foreach (Macros p in plugins)
             {
                 UnLoadMacros(p);
@@ -179,7 +228,33 @@ namespace MacrosAPI_v2
                 }
             }
         }
-
+        private bool OnMouseMove(int x, int y)
+        {
+            foreach (Macros macros in plugins.ToArray())
+            {
+                try { return macros.OnMouseMove(x, y); }
+                catch { return false; }
+            }
+            return false;
+        }
+        private bool OnMouseDown(MouseKey key)
+        {
+            foreach (Macros macros in plugins.ToArray())
+            {
+                try { return macros.OnMouseDown(key); }
+                catch { return false; }
+            }
+            return false;
+        }
+        private bool OnMouseUp(MouseKey key)
+        {
+            foreach (Macros macros in plugins.ToArray())
+            {
+                try { return macros.OnMouseUp(key); }
+                catch { return false; }
+            }
+            return false;
+        }
         private bool OnKeyDown(Key key, bool repeat)
         {
             foreach (Macros macros in plugins.ToArray())
