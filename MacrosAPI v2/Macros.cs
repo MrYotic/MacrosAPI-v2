@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using DeviceID = System.Int32;
 using KeyList = System.Collections.Generic.List<Key>;
@@ -132,6 +134,17 @@ namespace MacrosAPI_v2
         {
             Handler.MouseMove = enable;
         }
+        protected void MouseScroll(DeviceID deviceID, short rolling)
+        {
+            Interception.Stroke stroke = new Interception.Stroke();
+            stroke.Mouse.State = Interception.MouseState.Wheel;
+            stroke.Mouse.Rolling = rolling;
+            Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
+        }
+        protected void MouseScroll(short rolling)
+        {
+            MouseScroll(Handler.mouseDeviceID, rolling);
+        }
         protected void MouseDown(DeviceID deviceID, params MouseKey[] keys)
         {
             foreach (MouseKey key in keys)
@@ -209,7 +222,30 @@ namespace MacrosAPI_v2
             MouseMove(Handler.mouseDeviceID, x, y);
         }
         #endregion
+        protected Bitmap GetScreenShot(Process process)
+        {
+            var hwnd = process.MainWindowHandle;
 
+            WinAPI.GetWindowRect(hwnd, out var rect);
+            using (var image = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top))
+            {
+                using (var graphics = Graphics.FromImage(image))
+                {
+                    var hdcBitmap = graphics.GetHdc();
+                    WinAPI.PrintWindow(hwnd, hdcBitmap, 0);
+                    graphics.ReleaseHdc(hdcBitmap);
+                }
+                return image;
+            }
+        }
+        protected Process GetActiveProcess()
+        {
+            IntPtr h = WinAPI.GetForegroundWindow();
+            int pid = 0;
+            WinAPI.GetWindowThreadProcessId(h, ref pid);
+            Process p = Process.GetProcessById(pid);
+            return p;
+        }
         protected void PluginPostObject(object obj)
         {
             Handler.OnMacrosPostObjectMethod(obj);

@@ -16,7 +16,7 @@ namespace Tests
             MacrosUpdater updater = new MacrosUpdater();
             MacrosManager manager = new MacrosManager(updater);
 
-            manager.LoadMacros(new TriggerBot());
+            manager.LoadMacros(new NinjaBridge());
         }
     }
 

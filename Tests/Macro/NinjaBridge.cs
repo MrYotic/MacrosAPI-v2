@@ -1,9 +1,5 @@
 ﻿using MacrosAPI_v2;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.Macro
 {
@@ -54,19 +50,19 @@ namespace Tests.Macro
         {
             if (enable)
             {
-                MouseDown(MouseKey.Right);
-                Sleep(5);
-                MouseUp(MouseKey.Right);
-                KeyDown(Key.S);
-                Sleep(240);
-                KeyDown(Key.LShift);
-                Sleep(145);
-                KeyUp(Key.S);
-                Sleep(5);
-                KeyUp(Key.LShift);
-                MouseDown(MouseKey.Right);
-                Sleep(5);
-                MouseUp(MouseKey.Right);
+                //MouseDown(MouseKey.Right);
+                //Sleep(5);
+                //MouseUp(MouseKey.Right);
+                //KeyDown(Key.S);
+                //Sleep(240);
+                //KeyDown(Key.LShift);
+                //Sleep(145);
+                //KeyUp(Key.S);
+                //Sleep(5);
+                //KeyUp(Key.LShift);
+                //MouseDown(MouseKey.Right);
+                //Sleep(5);
+                //MouseUp(MouseKey.Right);
             }
         }
     }
