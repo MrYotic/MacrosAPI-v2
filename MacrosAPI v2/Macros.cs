@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using DeviceID = System.Int32;
 using KeyList = System.Collections.Generic.List<Key>;
 
@@ -129,7 +128,7 @@ namespace MacrosAPI_v2
         }
         #endregion
 
-        
+        protected void Sleep(int delay) { System.Threading.Thread.Sleep(delay); }
         protected void MouseDown(DeviceID deviceID, params MouseKey[] keys)
         {
             foreach (MouseKey key in keys)

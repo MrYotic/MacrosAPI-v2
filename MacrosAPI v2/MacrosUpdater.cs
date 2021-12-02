@@ -6,7 +6,8 @@ namespace MacrosAPI_v2
 {
     public class MacrosUpdater
     {
-        Thread netRead = null;
+        Thread updater = null;
+        Thread driverupdater = null;
 
         #region Системное
         MacrosManager _handler;
@@ -16,19 +17,32 @@ namespace MacrosAPI_v2
         }
         public void Stop()
         {
-            if (netRead != null)
+            if (updater != null)
             {
-                netRead.Abort();
-                netRead = null;
+                updater.Abort();
+                updater = null;
+            }
+
+            if (driverupdater != null)
+            {
+                driverupdater.Abort();
+                driverupdater = null;
             }
         }
         public void StartUpdater()
         {
-            if (netRead == null)
+            if (updater == null)
             {
-                netRead = new Thread(new ThreadStart(Updater));
-                netRead.Name = "PacketHandler";
-                netRead.Start();
+                updater = new Thread(new ThreadStart(Updater));
+                updater.Name = "Updater";
+                updater.Start();
+            }
+
+            if (driverupdater == null)
+            {
+                driverupdater = new Thread(new ThreadStart(DriverUpdater));
+                driverupdater.Name = "DriverUpdater";
+                driverupdater.Start();
             }
         }
         private void Updater()
@@ -40,7 +54,7 @@ namespace MacrosAPI_v2
                 while (keepUpdating)
                 {
                     stopWatch.Start();
-                    keepUpdating = Update();
+                    try { _handler.OnUpdate(); } catch { }
                     stopWatch.Stop();
                     int elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();
@@ -53,17 +67,27 @@ namespace MacrosAPI_v2
             catch (System.IO.IOException) { }
             catch (ObjectDisposedException) { }
         }
-        private bool Update()
+        private void DriverUpdater()
         {
             try
             {
-                _handler.DriverUpdater();
-                _handler.OnUpdate();
-
+                bool keepUpdating = true;
+                Stopwatch stopWatch = new Stopwatch();
+                while (keepUpdating)
+                {
+                    stopWatch.Start();
+                    try { _handler.DriverUpdater(); } catch { }
+                    stopWatch.Stop();
+                    int elapsed = stopWatch.Elapsed.Milliseconds;
+                    stopWatch.Reset();
+                    if (elapsed < 1)
+                    {
+                        Thread.Sleep(1 - elapsed);
+                    }
+                }
             }
-            catch (System.IO.IOException) { return false; }
-            catch (NullReferenceException) { return false; }
-            return true;
+            catch (System.IO.IOException) { }
+            catch (ObjectDisposedException) { }
         }
         #endregion
     }

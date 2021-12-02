@@ -15,21 +15,7 @@ namespace Tests
             MacrosUpdater updater = new MacrosUpdater();
             MacrosManager manager = new MacrosManager(updater);
 
-            /* Проверка установленного драйвера */
-            if (manager.isDriverInstalled)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Драйвер установлен");
-                Console.ForegroundColor = ConsoleColor.Gray;
-
-                manager.LoadMacros(new Test());
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Драйвер не установлен");
-                Console.ForegroundColor = ConsoleColor.Gray;
-            }
+            manager.LoadMacros(new Test());
         }
     }
 
@@ -40,17 +26,15 @@ namespace Tests
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Макрос загружен");
             Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine();
         }
-
+        private bool clicker = false;
+        private bool clicker2 = false;
         public override bool OnKeyDown(Key key, bool repeat)
         {
-            switch (key)
+            if (key == Key.R)
             {
-                case Key.R:
-                    MouseMove(100, 100);
-                    //MouseDown(MouseKey.Left);
-                    //MouseUp(MouseKey.Left);
-                    return true;
+                clicker = !clicker;
             }
             return false;
         }
@@ -58,14 +42,34 @@ namespace Tests
         {
             return false;
         }
+        public override void Update()
+        {
+            if (clicker && clicker2)
+            {
+                MouseUp(MouseKey.Right);
+                MouseDown(MouseKey.Left);
+                MouseUp(MouseKey.Left);
+                Sleep(1000 / 12);
+            }
+        }
         public override bool OnMouseDown(MouseKey key)
         {
-            Console.WriteLine("Клавиша: " + key + " нажата");
+            if (key == MouseKey.Left && clicker)
+            {
+                clicker2 = true;
+                Console.WriteLine("Кликер включен");
+                return true;
+            }
             return false;
         }
         public override bool OnMouseUp(MouseKey key)
         {
-            Console.WriteLine("Клавиша: " + key + " отжата");
+            if (key == MouseKey.Left && clicker)
+            {
+                clicker2 = false;
+                Console.WriteLine("Кликер выключен");
+                return true;
+            }
             return false;
         }
     }
