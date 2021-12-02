@@ -7,7 +7,8 @@ namespace MacrosAPI_v2
     public class MacrosUpdater
     {
         Thread updater = null;
-        Thread driverupdater = null;
+        Thread driverupdaterkeyboard = null;
+        Thread driverupdatermouse = null;
 
         #region Системное
         MacrosManager _handler;
@@ -23,10 +24,16 @@ namespace MacrosAPI_v2
                 updater = null;
             }
 
-            if (driverupdater != null)
+            if (driverupdaterkeyboard != null)
             {
-                driverupdater.Abort();
-                driverupdater = null;
+                driverupdaterkeyboard.Abort();
+                driverupdaterkeyboard = null;
+            }
+
+            if (driverupdatermouse != null)
+            {
+                driverupdatermouse.Abort();
+                driverupdatermouse = null;
             }
         }
         public void StartUpdater()
@@ -38,11 +45,18 @@ namespace MacrosAPI_v2
                 updater.Start();
             }
 
-            if (driverupdater == null)
+            if (driverupdaterkeyboard == null)
             {
-                driverupdater = new Thread(new ThreadStart(DriverUpdater));
-                driverupdater.Name = "DriverUpdater";
-                driverupdater.Start();
+                driverupdaterkeyboard = new Thread(new ThreadStart(DriverUpdaterKB));
+                driverupdaterkeyboard.Name = "DriverUpdaterKB";
+                driverupdaterkeyboard.Start();
+            }
+
+            if (driverupdatermouse == null)
+            {
+                driverupdatermouse = new Thread(new ThreadStart(DriverUpdaterMS));
+                driverupdatermouse.Name = "DriverUpdaterMS";
+                driverupdatermouse.Start();
             }
         }
         private void Updater()
@@ -67,7 +81,7 @@ namespace MacrosAPI_v2
             catch (System.IO.IOException) { }
             catch (ObjectDisposedException) { }
         }
-        private void DriverUpdater()
+        private void DriverUpdaterKB()
         {
             try
             {
@@ -76,7 +90,30 @@ namespace MacrosAPI_v2
                 while (keepUpdating)
                 {
                     stopWatch.Start();
-                    try { _handler.DriverUpdater(); } catch { }
+                    _handler.DriverUpdaterKeyBoard();
+                    stopWatch.Stop();
+                    int elapsed = stopWatch.Elapsed.Milliseconds;
+                    stopWatch.Reset();
+                    if (elapsed < 1)
+                    {
+                        Thread.Sleep(1 - elapsed);
+                    }
+                }
+            }
+            catch (System.IO.IOException) { }
+            catch (ObjectDisposedException) { }
+        }
+
+        private void DriverUpdaterMS()
+        {
+            try
+            {
+                bool keepUpdating = true;
+                Stopwatch stopWatch = new Stopwatch();
+                while (keepUpdating)
+                {
+                    stopWatch.Start();
+                    _handler.DriverUpdaterMouse();
                     stopWatch.Stop();
                     int elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();

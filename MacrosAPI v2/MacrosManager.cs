@@ -64,19 +64,9 @@ namespace MacrosAPI_v2
 
             return result;
         }
-        public void DriverUpdater()
+        public bool MouseMove = false;
+        public void DriverUpdaterMouse()
         {
-            DeviceID keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
-            switch (keyboardDeviceIDdeviceID)
-            {
-                case (0):
-
-                    break;
-                default:
-                    keyboardDeviceID = keyboardDeviceIDdeviceID;
-                    break;
-            }    
-
             DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
             switch (mousedeviceID)
             {
@@ -89,37 +79,17 @@ namespace MacrosAPI_v2
             }
 
             Interception.Stroke stroke = new Interception.Stroke();
-            while (Interception.Receive(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1) > 0)
-            {
-                Key key = ToKey(stroke.Key);
-                bool processed = false;
-
-                KeyList deviceDownedKeys = GetOrCreateKeyList(downedKeys, keyboardDeviceIDdeviceID);
-                if (stroke.Key.State.IsKeyDown())
-                {
-                    if (!deviceDownedKeys.Contains(key))
-                    {
-                        deviceDownedKeys.Add(key);
-                        processed = OnKeyDown(key, false);
-                    }
-                    else
-                    {
-                        processed = OnKeyDown(key, true);
-                    }
-                }
-                else
-                {
-                    deviceDownedKeys.Remove(key);
-                    processed = OnKeyUp(key);
-                }
-
-                if (!processed)
-                    Interception.Send(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1);
-            }
-
             while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
             {
-                bool processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
+                bool processed = false;
+
+                switch (MouseMove)
+                {
+                    case (true):
+                        processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
+                        break;
+                }
+
 
                 switch (stroke.Mouse.State)
                 {
@@ -159,6 +129,50 @@ namespace MacrosAPI_v2
 
                 if (!processed)
                     Interception.Send(mouse, mousedeviceID, ref stroke, 1);
+            }
+        }
+        public void DriverUpdaterKeyBoard()
+        {
+            DeviceID keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
+            switch (keyboardDeviceIDdeviceID)
+            {
+                case (0):
+
+                    break;
+                default:
+                    keyboardDeviceID = keyboardDeviceIDdeviceID;
+                    break;
+            }    
+
+            Interception.Stroke stroke = new Interception.Stroke();
+            while (Interception.Receive(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1) > 0)
+            {
+                Key key = ToKey(stroke.Key);
+                bool processed = false;
+
+                KeyList deviceDownedKeys = GetOrCreateKeyList(downedKeys, keyboardDeviceIDdeviceID);
+                switch (stroke.Key.State.IsKeyDown())
+                {
+                    case (true):
+                        switch (!deviceDownedKeys.Contains(key))
+                        {
+                            case (true):
+                                deviceDownedKeys.Add(key);
+                                processed = OnKeyDown(key, false);
+                                break;
+                            case (false):
+                                processed = OnKeyDown(key, true);
+                                break;
+                        }
+                        break;
+                    case (false):
+                        deviceDownedKeys.Remove(key);
+                        processed = OnKeyUp(key);
+                        break;
+                }
+
+                if (!processed)
+                    Interception.Send(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1);
             }
         }
 

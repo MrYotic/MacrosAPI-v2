@@ -71,7 +71,7 @@ namespace MacrosAPI_v2
         #endregion
 
         #region Методы плагина
-
+        protected void Sleep(int delay) { System.Threading.Thread.Sleep(delay); }
         #region Работа с клавиатурой
         protected bool IsKeyDown(DeviceID deviceID, Key key)
         {
@@ -127,8 +127,11 @@ namespace MacrosAPI_v2
             KeyUp(Handler.keyboardDeviceID, keys);
         }
         #endregion
-
-        protected void Sleep(int delay) { System.Threading.Thread.Sleep(delay); }
+        #region Работа с мышкой
+        protected void EnableMouseMoveEvent(bool enable)
+        {
+            Handler.MouseMove = enable;
+        }
         protected void MouseDown(DeviceID deviceID, params MouseKey[] keys)
         {
             foreach (MouseKey key in keys)
@@ -205,6 +208,7 @@ namespace MacrosAPI_v2
         {
             MouseMove(Handler.mouseDeviceID, x, y);
         }
+        #endregion
 
         protected void PluginPostObject(object obj)
         {
