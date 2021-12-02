@@ -68,7 +68,6 @@ namespace MacrosAPI_v2
 
         public virtual bool OnMouseDown(MouseKey key) { return false; }
         public virtual bool OnMouseUp(MouseKey key) { return false; }
-        public virtual bool OnMouseUp(Key key) { return false; }
         public virtual bool OnMouseMove(int x, int y) { return false; }
         #endregion
 
