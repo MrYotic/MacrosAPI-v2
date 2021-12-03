@@ -6,9 +6,14 @@ namespace MacrosAPI_v2
 {
     public class MacrosUpdater
     {
+        public MacrosUpdater()
+        {
+            
+        }
         Thread updater = null;
         Thread driverupdaterkeyboard = null;
         Thread driverupdatermouse = null;
+        Thread driverupdatermousemove = null;
 
         #region Системное
         MacrosManager _handler;
@@ -35,6 +40,11 @@ namespace MacrosAPI_v2
                 driverupdatermouse.Abort();
                 driverupdatermouse = null;
             }
+            if (driverupdatermousemove != null)
+            {
+                driverupdatermousemove.Abort();
+                driverupdatermousemove = null;
+            }
         }
         public void StartUpdater()
         {
@@ -49,6 +59,7 @@ namespace MacrosAPI_v2
             {
                 driverupdaterkeyboard = new Thread(new ThreadStart(DriverUpdaterKB));
                 driverupdaterkeyboard.Name = "DriverUpdaterKB";
+                driverupdaterkeyboard.Priority = ThreadPriority.Highest;
                 driverupdaterkeyboard.Start();
             }
 
@@ -56,7 +67,16 @@ namespace MacrosAPI_v2
             {
                 driverupdatermouse = new Thread(new ThreadStart(DriverUpdaterMS));
                 driverupdatermouse.Name = "DriverUpdaterMS";
+                driverupdatermouse.Priority = ThreadPriority.Highest;
                 driverupdatermouse.Start();
+            }
+
+            if (driverupdatermousemove == null)
+            {
+                driverupdatermousemove = new Thread(new ThreadStart(DriverUpdaterMSM));
+                driverupdatermousemove.Name = "DriverUpdaterMSM";
+                driverupdatermousemove.Priority = ThreadPriority.Highest;
+                driverupdatermousemove.Start();
             }
         }
         private void Updater()
@@ -114,6 +134,28 @@ namespace MacrosAPI_v2
                 {
                     stopWatch.Start();
                     _handler.DriverUpdaterMouse();
+                    stopWatch.Stop();
+                    int elapsed = stopWatch.Elapsed.Milliseconds;
+                    stopWatch.Reset();
+                    if (elapsed < 1)
+                    {
+                        Thread.Sleep(1 - elapsed);
+                    }
+                }
+            }
+            catch (System.IO.IOException) { }
+            catch (ObjectDisposedException) { }
+        }
+        private void DriverUpdaterMSM()
+        {
+            try
+            {
+                bool keepUpdating = true;
+                Stopwatch stopWatch = new Stopwatch();
+                while (keepUpdating)
+                {
+                    stopWatch.Start();
+                    _handler.DriverUpdaterMouseMove();
                     stopWatch.Stop();
                     int elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();

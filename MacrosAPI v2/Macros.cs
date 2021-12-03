@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using DeviceID = System.Int32;
 using KeyList = System.Collections.Generic.List<Key>;
 
@@ -29,6 +31,8 @@ namespace MacrosAPI_v2
         }
         private Macros master = null;
         protected void SetMaster(Macros master) { this.master = master; }
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int keys);
         #endregion
 
         #region Загрузка и выгрузка плагина
@@ -74,6 +78,10 @@ namespace MacrosAPI_v2
         #region Методы плагина
         protected void Sleep(int delay) { System.Threading.Thread.Sleep(delay); }
         #region Работа с клавиатурой
+        protected bool IsKeyPressed(Keys key)
+        {
+            return GetAsyncKeyState((int)key) != 0;
+        }
         protected bool IsKeyDown(DeviceID deviceID, Key key)
         {
             KeyList deviceDownedKeys;
@@ -129,10 +137,6 @@ namespace MacrosAPI_v2
         }
         #endregion
         #region Работа с мышкой
-        protected void EnableMouseMoveEvent(bool enable)
-        {
-            Handler.MouseMove = enable;
-        }
         protected void MouseScroll(DeviceID deviceID, short rolling)
         {
             Interception.Stroke stroke = new Interception.Stroke();

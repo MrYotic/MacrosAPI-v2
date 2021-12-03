@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using DeviceID = System.Int32;
 using KeyList = System.Collections.Generic.List<Key>;
 
@@ -21,8 +22,8 @@ namespace MacrosAPI_v2
         public MacrosManager(MacrosUpdater updater)
         {
             keyboard = Interception.CreateContext();
-            mouse = Interception.CreateContext();
             Interception.SetFilter(keyboard, Interception.IsKeyboard, Interception.Filter.All);
+            mouse = Interception.CreateContext();
             Interception.SetFilter(mouse, Interception.IsMouse, Interception.Filter.All);
 
             updater.SetHandler(this);
@@ -64,7 +65,28 @@ namespace MacrosAPI_v2
 
             return result;
         }
-        public bool MouseMove = false;
+        public void DriverUpdaterMouseMove()
+        {
+            DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
+            switch (mousedeviceID)
+            {
+                case (0):
+
+                    break;
+                default:
+                    mouseDeviceID = mousedeviceID;
+                    break;
+            }
+
+            Interception.Stroke stroke = new Interception.Stroke();
+            while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
+            {
+                bool processed = processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
+
+                if (!processed)
+                    Interception.Send(mouse, mousedeviceID, ref stroke, 1);
+            }
+        }
         public void DriverUpdaterMouse()
         {
             DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
@@ -82,15 +104,6 @@ namespace MacrosAPI_v2
             while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
             {
                 bool processed = false;
-
-                switch (MouseMove)
-                {
-                    case (true):
-                        processed = OnMouseMove(stroke.Mouse.X, stroke.Mouse.Y);
-                        break;
-                }
-
-
                 switch (stroke.Mouse.State)
                 {
                     case (Interception.MouseState.LeftButtonDown):

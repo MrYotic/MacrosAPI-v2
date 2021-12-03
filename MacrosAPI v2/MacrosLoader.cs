@@ -74,6 +74,7 @@ namespace MacrosAPI_v2
                         "using System.IO;",
                         "using System.Net;",
                         "using System.Threading;",
+                        "using System.Windows.Forms;",
                         "using PluginsAPI;",
                         String.Join("\n", libs),
                         "namespace ScriptLoader {",
