@@ -207,7 +207,27 @@ namespace MacrosAPI_v2
             Interception.Stroke stroke = new Interception.Stroke();
             stroke.Mouse.X = x;
             stroke.Mouse.Y = y;
+            stroke.Mouse.Flags = Interception.MouseFlag.MoveRelative;
             Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
+        }
+
+        protected void MouseSet(DeviceID deviceID, int x, int y)
+        {
+            Interception.Stroke stroke = new Interception.Stroke();
+            stroke.Mouse.X = x;
+            stroke.Mouse.Y = y;
+            stroke.Mouse.Flags = Interception.MouseFlag.MoveAbsolute;
+            Interception.Send(Handler.mouse, deviceID, ref stroke, 1);
+        }
+
+        protected void MouseMove(int x, int y)
+        {
+            MouseMove(Handler.mouseDeviceID, x, y);
+        }
+
+        protected void MouseSet(int x, int y)
+        {
+            MouseSet(Handler.mouseDeviceID, x, y);
         }
 
         protected void MouseDown(params MouseKey[] keys)
@@ -218,11 +238,6 @@ namespace MacrosAPI_v2
         protected void MouseUp(params MouseKey[] keys)
         {
             MouseUp(Handler.mouseDeviceID, keys);
-        }
-
-        protected void MouseMove(int x, int y)
-        {
-            MouseMove(Handler.mouseDeviceID, x, y);
         }
         #endregion
         protected Bitmap GetScreenShot(Process process)

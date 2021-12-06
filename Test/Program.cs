@@ -19,16 +19,67 @@ namespace Test
     }
     public class Test : Macros
     {
+        private void Click()
+        {
+            Sleep(1);
+            MouseDown(MouseKey.Left);
+            MouseUp(MouseKey.Left);
+            Sleep(1);
+        }
+        private void Exit()
+        {
+            Sleep(15);
+            KeyDown(Key.E);
+            KeyUp(Key.E);
+            Sleep(1);
+        }
+        private void FirstSlot()
+        {
+            MouseSet(27100, 25000);
+        }
         public override void Update()
         {
-            if (IsKeyPressed(Keys.R))
+            if (enabled)
             {
-                KeyDown(Key.A);
-                KeyUp(Key.A);
+                enabled = false;
+                FirstSlot();
+                KeyDown(Key.LShift);
+                Click();
+                for (int loted = 0; loted < 8; loted++)
+                {
+                    MouseMove(35, 0);
+                    Click();
+                }
+                FirstSlot();
+                MouseMove(0, 35);
+                Click();
+                for (int loted = 0; loted < 8; loted++)
+                {
+                    MouseMove(35, 0);
+                    Click();
+                }
+                FirstSlot();
+                MouseMove(0, 35);
+                MouseMove(0, 35);
+                Click();
+                for (int loted = 0; loted < 8; loted++)
+                {
+                    MouseMove(35, 0);
+                    Click();
+                }
+                Sleep(5);
+                KeyUp(Key.LShift);
+                Exit();
             }
         }
-        public override bool OnMouseMove(int x, int y)
+        private bool enabled = false;
+        public override bool OnMouseDown(MouseKey key)
         {
+            Console.WriteLine(key);
+            if (key == MouseKey.Button2)
+            {
+                enabled = true;
+            }
             return false;
         }
     }
