@@ -10,17 +10,6 @@ namespace MacrosAPI_v2
     public class MacrosLoader
     {
         private static readonly Dictionary<ulong, Assembly> CompileCache = new Dictionary<ulong, Assembly>();
-
-        /// <summary>
-        /// Run the specified C# script file
-        /// </summary>
-        /// <param name="apiHandler">ChatBot handler for accessing Plugin API</param>
-        /// <param name="lines">Lines of the script file to run</param>
-        /// <param name="args">Arguments to pass to the script</param>
-        /// <param name="localVars">Local variables passed along with the script</param>
-        /// <param name="run">Set to false to compile and cache the script without launching it</param>
-        /// <exception cref="CSharpException">Thrown if an error occured</exception>
-        /// <returns>Result of the execution, returned by the script</returns>
         public static object Run(Macros apiHandler, string[] lines, string[] args, Dictionary<string, object> localVars, bool run = true)
         {
             //Script hash for determining if it was previously compiled
@@ -75,7 +64,7 @@ namespace MacrosAPI_v2
                         "using System.Net;",
                         "using System.Threading;",
                         "using System.Windows.Forms;",
-                        "using PluginsAPI;",
+                        "using MacrosAPI_v2;",
                         String.Join("\n", libs),
                         "namespace ScriptLoader {",
                         "public class Script {",

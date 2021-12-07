@@ -42,34 +42,7 @@ namespace Test
             if (enabled)
             {
                 enabled = false;
-                FirstSlot();
-                KeyDown(Key.LShift);
-                Click();
-                for (int loted = 0; loted < 8; loted++)
-                {
-                    MouseMove(35, 0);
-                    Click();
-                }
-                FirstSlot();
-                MouseMove(0, 35);
-                Click();
-                for (int loted = 0; loted < 8; loted++)
-                {
-                    MouseMove(35, 0);
-                    Click();
-                }
-                FirstSlot();
-                MouseMove(0, 35);
-                MouseMove(0, 35);
-                Click();
-                for (int loted = 0; loted < 8; loted++)
-                {
-                    MouseMove(35, 0);
-                    Click();
-                }
-                Sleep(5);
-                KeyUp(Key.LShift);
-                Exit();
+                MouseSet(695, 400);
             }
         }
         private bool enabled = false;
