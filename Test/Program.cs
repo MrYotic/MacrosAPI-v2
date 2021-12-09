@@ -15,6 +15,7 @@ namespace Test
             MacrosUpdater updater = new MacrosUpdater();
             MacrosManager manager = new MacrosManager(updater);
             manager.LoadMacros(new Test());
+            manager.Quit();
         }
     }
     public class Test : Macros

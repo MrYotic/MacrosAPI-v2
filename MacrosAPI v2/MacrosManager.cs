@@ -18,13 +18,15 @@ namespace MacrosAPI_v2
 
         public Dictionary<DeviceID, KeyList> downedKeys = new Dictionary<DeviceID, KeyList>();
 
+        private MacrosUpdater updater = null;
+
         public MacrosManager(MacrosUpdater updater)
         {
             keyboard = Interception.CreateContext();
             Interception.SetFilter(keyboard, Interception.IsKeyboard, Interception.Filter.All);
             mouse = Interception.CreateContext();
             Interception.SetFilter(mouse, Interception.IsMouse, Interception.Filter.All);
-
+            this.updater = updater;
             updater.SetHandler(this);
             updater.StartUpdater();
         }
@@ -170,8 +172,13 @@ namespace MacrosAPI_v2
 
         public void Quit()
         {
+            if (updater != null)
+            {
+                updater.Stop();
+            }
             Interception.DestroyContext(keyboard);
-            foreach (Macros p in plugins)
+            Interception.DestroyContext(mouse);
+            foreach (Macros p in plugins.ToArray())
             {
                 UnLoadMacros(p);
             }
@@ -305,6 +312,7 @@ namespace MacrosAPI_v2
             {
                 UnregisterPluginChannel(entry.Key, m);
             }
+
         }
         #endregion
 

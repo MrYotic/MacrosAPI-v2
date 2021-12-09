@@ -30,19 +30,22 @@ namespace MacrosAPI_v2
             this._handler = handler;
         }
         private Macros master = null;
-        protected void SetMaster(Macros master) { this.master = master; }
+        protected void SetMaster(Macros master)
+        { 
+            this.master = master; 
+        }
         [DllImport("user32.dll")]
         private static extern short GetAsyncKeyState(int keys);
         #endregion
 
         #region Загрузка и выгрузка плагина
-        protected void LoadPlugin(Macros bot)
+        protected void LoadPlugin(Macros macros)
         {
-            Handler.UnLoadMacros(bot); Handler.LoadMacros(bot);
+            Handler.UnLoadMacros(macros); Handler.LoadMacros(macros);
         }
-        protected void UnLoadPlugin(Macros bot)
+        protected void UnLoadPlugin(Macros macros)
         {
-            Handler.UnLoadMacros(bot);
+            Handler.UnLoadMacros(macros);
 
             if (Handler.OnUnloadPlugin != null)
             {
