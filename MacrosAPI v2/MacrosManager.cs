@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,15 +11,19 @@ namespace MacrosAPI_v2
 {
     public class MacrosManager
     {
+        private readonly List<Macros> plugins = new List<Macros>();
+
+        private readonly Dictionary<string, List<Macros>> registeredPluginsPluginChannels =
+            new Dictionary<string, List<Macros>>();
+
+        public Dictionary<int, KeyList> downedKeys = new Dictionary<int, KeyList>();
         public IntPtr keyboard;
+
+        public int keyboardDeviceID = 1;
         public IntPtr mouse;
+        public int mouseDeviceID = 1;
 
-        public DeviceID keyboardDeviceID = 1;
-        public DeviceID mouseDeviceID = 1;
-
-        public Dictionary<DeviceID, KeyList> downedKeys = new Dictionary<DeviceID, KeyList>();
-
-        private MacrosUpdater updater = null;
+        private readonly MacrosUpdater updater;
 
         public MacrosManager(MacrosUpdater updater)
         {
@@ -30,7 +35,8 @@ namespace MacrosAPI_v2
             updater.SetHandler(this);
             updater.StartUpdater();
         }
-        private KeyList GetOrCreateKeyList(Dictionary<DeviceID, KeyList> dictionary, DeviceID deviceID)
+
+        private KeyList GetOrCreateKeyList(Dictionary<int, KeyList> dictionary, int deviceID)
         {
             KeyList result;
             if (!dictionary.TryGetValue(deviceID, out result))
@@ -38,40 +44,45 @@ namespace MacrosAPI_v2
                 result = new KeyList();
                 dictionary[deviceID] = result;
             }
+
             return result;
         }
+
         public Key ToKey(Interception.KeyStroke keyStroke)
         {
-            ushort result = (ushort)keyStroke.Code;
+            var result = keyStroke.Code;
 
             if ((keyStroke.State & Interception.KeyState.E0) != 0)
                 result += 0x100;
 
-            return (Key)result;
+            return (Key) result;
         }
+
         public Interception.KeyStroke ToKeyStroke(Key key, bool down)
         {
-            Interception.KeyStroke result = new Interception.KeyStroke();
+            var result = new Interception.KeyStroke();
 
             if (!down)
                 result.State = Interception.KeyState.Up;
 
-            ushort code = (ushort)key;
+            var code = (ushort) key;
             if (code >= 0x100)
             {
                 code -= 0x100;
                 result.State |= Interception.KeyState.E0;
             }
+
             result.Code = code;
 
             return result;
         }
+
         public void DriverUpdaterMouse()
         {
-            DeviceID mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
+            var mousedeviceID = Interception.WaitWithTimeout(mouse, 0);
             switch (mousedeviceID)
             {
-                case (0):
+                case 0:
 
                     break;
                 default:
@@ -79,43 +90,46 @@ namespace MacrosAPI_v2
                     break;
             }
 
-            Interception.Stroke stroke = new Interception.Stroke();
+            var stroke = new Interception.Stroke();
             while (Interception.Receive(mouse, mousedeviceID, ref stroke, 1) > 0)
             {
-                bool processed = false;
+                var processed = false;
                 switch (stroke.Mouse.State)
                 {
-                    case (Interception.MouseState.LeftButtonDown):
+                    case Interception.MouseState.LeftButtonDown:
                         processed = OnMouseDown(MouseKey.Left);
                         break;
-                    case (Interception.MouseState.RightButtonDown):
+                    case Interception.MouseState.RightButtonDown:
                         processed = OnMouseDown(MouseKey.Right);
                         break;
-                    case (Interception.MouseState.MiddleButtonDown):
+                    case Interception.MouseState.MiddleButtonDown:
                         processed = OnMouseDown(MouseKey.Middle);
                         break;
-                    case (Interception.MouseState.Button4Down):
+                    case Interception.MouseState.Button4Down:
                         processed = OnMouseDown(MouseKey.Button1);
                         break;
-                    case (Interception.MouseState.Button5Down):
+                    case Interception.MouseState.Button5Down:
                         processed = OnMouseDown(MouseKey.Button2);
                         break;
 
 
-                    case (Interception.MouseState.LeftButtonUp):
+                    case Interception.MouseState.LeftButtonUp:
                         processed = OnMouseUp(MouseKey.Left);
                         break;
-                    case (Interception.MouseState.RightButtonUp):
+                    case Interception.MouseState.RightButtonUp:
                         processed = OnMouseUp(MouseKey.Right);
                         break;
-                    case (Interception.MouseState.MiddleButtonUp):
+                    case Interception.MouseState.MiddleButtonUp:
                         processed = OnMouseUp(MouseKey.Middle);
                         break;
-                    case (Interception.MouseState.Button4Up):
+                    case Interception.MouseState.Button4Up:
                         processed = OnMouseUp(MouseKey.Button1);
                         break;
-                    case (Interception.MouseState.Button5Up):
+                    case Interception.MouseState.Button5Up:
                         processed = OnMouseUp(MouseKey.Button2);
+                        break;
+                    case Interception.MouseState.Wheel:
+                        processed = OnMouseWheel(stroke.Mouse.Rolling);
                         break;
                 }
 
@@ -125,41 +139,43 @@ namespace MacrosAPI_v2
                     Interception.Send(mouse, mousedeviceID, ref stroke, 1);
             }
         }
+
         public void DriverUpdaterKeyBoard()
         {
-            DeviceID keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
+            var keyboardDeviceIDdeviceID = Interception.WaitWithTimeout(keyboard, 0);
             switch (keyboardDeviceIDdeviceID)
             {
-                case (0):
+                case 0:
 
                     break;
                 default:
                     keyboardDeviceID = keyboardDeviceIDdeviceID;
                     break;
-            }    
+            }
 
-            Interception.Stroke stroke = new Interception.Stroke();
+            var stroke = new Interception.Stroke();
             while (Interception.Receive(keyboard, keyboardDeviceIDdeviceID, ref stroke, 1) > 0)
             {
-                Key key = ToKey(stroke.Key);
-                bool processed = false;
+                var key = ToKey(stroke.Key);
+                var processed = false;
 
-                KeyList deviceDownedKeys = GetOrCreateKeyList(downedKeys, keyboardDeviceIDdeviceID);
+                var deviceDownedKeys = GetOrCreateKeyList(downedKeys, keyboardDeviceIDdeviceID);
                 switch (stroke.Key.State.IsKeyDown())
                 {
-                    case (true):
+                    case true:
                         switch (!deviceDownedKeys.Contains(key))
                         {
-                            case (true):
+                            case true:
                                 deviceDownedKeys.Add(key);
                                 processed = OnKeyDown(key, false);
                                 break;
-                            case (false):
+                            case false:
                                 processed = OnKeyDown(key, true);
                                 break;
                         }
+
                         break;
-                    case (false):
+                    case false:
                         deviceDownedKeys.Remove(key);
                         processed = OnKeyUp(key);
                         break;
@@ -172,200 +188,158 @@ namespace MacrosAPI_v2
 
         public void Quit()
         {
-            if (updater != null)
-            {
-                updater.Stop();
-            }
+            if (updater != null) updater.Stop();
             Interception.DestroyContext(keyboard);
             Interception.DestroyContext(mouse);
-            foreach (Macros p in plugins.ToArray())
-            {
-                UnLoadMacros(p);
-            }
+            foreach (var p in plugins.ToArray()) UnLoadMacros(p);
         }
-        private readonly Dictionary<string, List<Macros>> registeredPluginsPluginChannels = new Dictionary<string, List<Macros>>();
-        private readonly List<Macros> plugins = new List<Macros>();
 
         #region Системное
-        public bool isDriverInstalled
-        {
-            get
-            {
-                if (File.Exists(Path.Combine(Environment.SystemDirectory, "drivers\\mouse.sys")) && File.Exists(Path.Combine(Environment.SystemDirectory, "drivers\\keyboard.sys")))
-                {
-                    return true;
-                }
-                else { return false; }
-            }
-        }
-        public static bool isUsingMono
-        {
-            get
-            {
-                return Type.GetType("Mono.Runtime") != null;
-            }
-        }
+
+        public static bool isUsingMono => Type.GetType("Mono.Runtime") != null;
+
         public void OnUpdate()
         {
-            foreach (Macros bot in plugins.ToArray())
-            {
-                try
-                {
-                    bot.Update();
-                }
-                catch { }
-            }
+            foreach (var bot in plugins.ToArray())
+                try { bot.Update(); } catch { }
         }
+
         #endregion
 
         #region Получение и отправка данных от плагина
+
         public Action OnUnloadPlugin { set; get; }
         public Action<object> OnMacrosPostObject { set; get; }
         public Action<Macros> OnMacrosLoad { set; get; }
+
         public void OnMacrosPostObjectMethod(object ob)
         {
-            if (OnMacrosPostObject != null)
-            {
-                OnMacrosPostObject(ob);
-            }
+            if (OnMacrosPostObject != null) OnMacrosPostObject(ob);
         }
 
         #endregion
 
         #region Управление плагином
-        public void LoadMacros(Macros b, bool init = true)
+
+        public void LoadMacros(Macros macros, bool init = true)
         {
-            b.SetHandler(this);
-            plugins.Add(b);
+            macros.SetHandler(this);
+            plugins.Add(macros);
             if (init)
             {
-                List<Macros> temp = new List<Macros>();
-                temp.Add(b);
+                var temp = new List<Macros>();
+                temp.Add(macros);
                 //new Plugin[] { b }
                 DispatchPluginEvent(bot => bot.Initialize(), temp);
-                if (OnMacrosLoad != null)
-                {
-                    OnMacrosLoad(b);
-                }
+                if (OnMacrosLoad != null) OnMacrosLoad(macros);
             }
         }
+
         private bool OnMouseMove(int x, int y)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { return macros.OnMouseMove(x, y); }
-                catch { return false; }
-            }
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnMouseMove(x, y); } catch { return false; }
             return false;
         }
+
         private bool OnMouseDown(MouseKey key)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { return macros.OnMouseDown(key); }
-                catch { return false; }
-            }
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnMouseDown(key); } catch { return false; }
             return false;
         }
+
         private bool OnMouseUp(MouseKey key)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { return macros.OnMouseUp(key); }
-                catch { return false; }
-            }
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnMouseUp(key); } catch { return false; }
             return false;
         }
+
+        private bool OnMouseWheel(int rolling)
+        {
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnMouseWheel(rolling); } catch { return false; }
+            return false;
+        }
+
         private bool OnKeyDown(Key key, bool repeat)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { return macros.OnKeyDown(key, repeat); }
-                catch { return false; }
-            }
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnKeyDown(key, repeat); } catch { return false; }
             return false;
         }
+
+
+
         private bool OnKeyUp(Key key)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { return macros.OnKeyUp(key); }
-                catch { return false; }
-            }
+            foreach (var macros in plugins.ToArray())
+                try { return macros.OnKeyUp(key); } catch { return false; }
             return false;
         }
 
-        public void MacrosPostObject(Macros m, object obj)
+        public void MacrosPostObject(Macros macros, object obj)
         {
-            foreach (Macros macros in plugins.ToArray())
-            {
-                try { if (m == macros) { macros.ReceivedObject(obj); } }
-                catch { }
-            }
+            foreach (var smacros in plugins.ToArray())
+                try { if (macros == smacros) smacros.ReceivedObject(obj); } catch { }
         }
+
         public void UnLoadMacros(Macros m)
         {
-            plugins.RemoveAll(item => object.ReferenceEquals(item, m));
+            plugins.RemoveAll(item => ReferenceEquals(item, m));
 
             var botRegistrations = registeredPluginsPluginChannels.Where(entry => entry.Value.Contains(m)).ToList();
-            foreach (var entry in botRegistrations)
-            {
-                UnregisterPluginChannel(entry.Key, m);
-            }
-
+            foreach (var entry in botRegistrations) UnregisterPluginChannel(entry.Key, m);
         }
+
         #endregion
 
         #region Регистрация плагинов
+
         private void DispatchPluginEvent(Action<Macros> action, IEnumerable<Macros> botList = null)
         {
             Macros[] selectedBots;
 
             if (botList != null)
-            {
                 selectedBots = botList.ToArray();
-            }
             else
-            {
                 selectedBots = plugins.ToArray();
-            }
 
-            foreach (Macros bot in selectedBots)
-            {
+            foreach (var bot in selectedBots)
                 try
                 {
                     action(bot);
-                    //Console.WriteLine("Выполнил: " + action.Method);
                 }
                 catch (Exception e)
                 {
                     if (!(e is ThreadAbortException))
                     {
                         //Retrieve parent method name to determine which event caused the exception
-                        System.Diagnostics.StackFrame frame = new System.Diagnostics.StackFrame(1);
-                        System.Reflection.MethodBase method = frame.GetMethod();
-                        string parentMethodName = method.Name;
+                        var frame = new StackFrame(1);
+                        var method = frame.GetMethod();
+                        var parentMethodName = method.Name;
 
                         //Display a meaningful error message to help debugging the ChatBot
-                        Console.WriteLine(parentMethodName + ": Got error from " + bot.ToString() + ": " + e.ToString());
+                        Console.WriteLine(parentMethodName + ": Got error from " + bot + ": " + e);
                     }
-                    else throw;
+                    else
+                    {
+                        throw;
+                    }
                 }
-            }
         }
 
         public void UnregisterPluginChannel(string channel, Macros bot)
         {
             if (registeredPluginsPluginChannels.ContainsKey(channel))
             {
-                List<Macros> registeredBots = registeredPluginsPluginChannels[channel];
-                registeredBots.RemoveAll(item => object.ReferenceEquals(item, bot));
-                if (registeredBots.Count == 0)
-                {
-                    registeredPluginsPluginChannels.Remove(channel);
-                }
+                var registeredBots = registeredPluginsPluginChannels[channel];
+                registeredBots.RemoveAll(item => ReferenceEquals(item, bot));
+                if (registeredBots.Count == 0) registeredPluginsPluginChannels.Remove(channel);
             }
         }
+
         #endregion
     }
 }

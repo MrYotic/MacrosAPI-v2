@@ -15,7 +15,6 @@ namespace Test
             MacrosUpdater updater = new MacrosUpdater();
             MacrosManager manager = new MacrosManager(updater);
             manager.LoadMacros(new Test());
-            manager.Quit();
         }
     }
     public class Test : Macros
@@ -46,6 +45,13 @@ namespace Test
                 MouseSet(695, 400);
             }
         }
+
+        public override bool OnMouseWheel(int rolling)
+        {
+            Console.WriteLine("Прокрутил на: " + rolling);
+            return base.OnMouseWheel(rolling);
+        }
+
         private bool enabled = false;
         public override bool OnMouseDown(MouseKey key)
         {

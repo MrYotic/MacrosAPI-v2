@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 
 namespace MacrosAPI_v2
 {
     public class MacrosUpdater
     {
-        public MacrosUpdater()
-        {
-            
-        }
-        Thread updater = null;
-        Thread driverupdaterkeyboard = null;
-        Thread driverupdatermouse = null;
+        private Thread driverupdaterkeyboard;
+        private Thread driverupdatermouse;
+        private Thread updater;
 
         #region Системное
-        MacrosManager _handler;
+
+        private MacrosManager _handler;
+
         public void SetHandler(MacrosManager _handler)
         {
             this._handler = _handler;
         }
+
         public void Stop()
         {
             if (updater != null)
@@ -40,18 +40,19 @@ namespace MacrosAPI_v2
                 driverupdatermouse = null;
             }
         }
+
         public void StartUpdater()
         {
             if (updater == null)
             {
-                updater = new Thread(new ThreadStart(Updater));
+                updater = new Thread(Updater);
                 updater.Name = "Updater";
                 updater.Start();
             }
 
             if (driverupdaterkeyboard == null)
             {
-                driverupdaterkeyboard = new Thread(new ThreadStart(DriverUpdaterKB));
+                driverupdaterkeyboard = new Thread(DriverUpdaterKB);
                 driverupdaterkeyboard.Name = "DriverUpdaterKB";
                 driverupdaterkeyboard.Priority = ThreadPriority.Highest;
                 driverupdaterkeyboard.Start();
@@ -59,79 +60,92 @@ namespace MacrosAPI_v2
 
             if (driverupdatermouse == null)
             {
-                driverupdatermouse = new Thread(new ThreadStart(DriverUpdaterMS));
+                driverupdatermouse = new Thread(DriverUpdaterMS);
                 driverupdatermouse.Name = "DriverUpdaterMS";
                 driverupdatermouse.Priority = ThreadPriority.Highest;
                 driverupdatermouse.Start();
             }
         }
+
         private void Updater()
         {
             try
             {
-                bool keepUpdating = true;
-                Stopwatch stopWatch = new Stopwatch();
+                var keepUpdating = true;
+                var stopWatch = new Stopwatch();
                 while (keepUpdating)
                 {
                     stopWatch.Start();
-                    try { _handler.OnUpdate(); } catch { }
-                    stopWatch.Stop();
-                    int elapsed = stopWatch.Elapsed.Milliseconds;
-                    stopWatch.Reset();
-                    if (elapsed < 1)
+                    try
                     {
-                        Thread.Sleep(1 - elapsed);
+                        _handler.OnUpdate();
                     }
+                    catch
+                    {
+                    }
+
+                    stopWatch.Stop();
+                    var elapsed = stopWatch.Elapsed.Milliseconds;
+                    stopWatch.Reset();
+                    if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
             }
-            catch (System.IO.IOException) { }
-            catch (ObjectDisposedException) { }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
+
         private void DriverUpdaterKB()
         {
             try
             {
-                bool keepUpdating = true;
-                Stopwatch stopWatch = new Stopwatch();
+                var keepUpdating = true;
+                var stopWatch = new Stopwatch();
                 while (keepUpdating)
                 {
                     stopWatch.Start();
                     _handler.DriverUpdaterKeyBoard();
                     stopWatch.Stop();
-                    int elapsed = stopWatch.Elapsed.Milliseconds;
+                    var elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();
-                    if (elapsed < 1)
-                    {
-                        Thread.Sleep(1 - elapsed);
-                    }
+                    if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
             }
-            catch (System.IO.IOException) { }
-            catch (ObjectDisposedException) { }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
 
         private void DriverUpdaterMS()
         {
             try
             {
-                bool keepUpdating = true;
-                Stopwatch stopWatch = new Stopwatch();
+                var keepUpdating = true;
+                var stopWatch = new Stopwatch();
                 while (keepUpdating)
                 {
                     stopWatch.Start();
                     _handler.DriverUpdaterMouse();
                     stopWatch.Stop();
-                    int elapsed = stopWatch.Elapsed.Milliseconds;
+                    var elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();
-                    if (elapsed < 1)
-                    {
-                        Thread.Sleep(1 - elapsed);
-                    }
+                    if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
             }
-            catch (System.IO.IOException) { }
-            catch (ObjectDisposedException) { }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
+
         #endregion
     }
 }
