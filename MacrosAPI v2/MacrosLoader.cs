@@ -12,32 +12,24 @@ namespace MacrosAPI_v2
         private static readonly Dictionary<ulong, Assembly> CompileCache = new Dictionary<ulong, Assembly>();
         public static object Run(Macros apiHandler, string[] lines, string[] args, Dictionary<string, object> localVars, bool run = true)
         {
-            //Script hash for determining if it was previously compiled
             ulong scriptHash = QuickHash(lines);
             Assembly assembly = null;
-
-            //No need to compile two scripts at the same time
             lock (CompileCache)
             {
-                ///Process and compile script only if not already compiled
                 if (!CompileCache.ContainsKey(scriptHash))
                 {
-                    //Process different sections of the script file
                     bool scriptMain = true;
-                    List<string> script = new List<string>();
-                    List<string> extensions = new List<string>();
-                    List<string> libs = new List<string>();
-                    List<string> dlls = new List<string>();
+                    List<string> script = new List<string>(),
+                    extensions = new List<string>(),
+                    libs = new List<string>(),
+                    dlls = new List<string>();
                     foreach (string line in lines)
                     {
                         if (line.StartsWith("//using"))
-                        {
                             libs.Add(line.Replace("//", "").Trim());
-                        }
                         else if (line.StartsWith("//dll"))
-                        {
+
                             dlls.Add(line.Replace("//dll ", "").Trim());
-                        }
                         else if (line.StartsWith("//Script"))
                         {
                             if (line.EndsWith("Extensions"))
@@ -47,13 +39,9 @@ namespace MacrosAPI_v2
                             script.Add(line);
                         else extensions.Add(line);
                     }
-
-                    //Add return statement if missing
                     if (script.All(line => !line.StartsWith("return ") && !line.Contains(" return ")))
                         script.Add("return null;");
-
-                    //Generate a class from the given script
-                    string code = String.Join("\n", new string[]
+                    string code = string.Join("\n", new string[]
                     {
                         "using System;",
                         "using System.Collections.Generic;",
@@ -65,56 +53,39 @@ namespace MacrosAPI_v2
                         "using System.Threading;",
                         "using System.Windows.Forms;",
                         "using MacrosAPI_v2;",
-                        String.Join("\n", libs),
+                        string.Join("\n", libs),
                         "namespace ScriptLoader {",
                         "public class Script {",
                         "public CSharpAPI MCC;",
                         "public object __run(CSharpAPI __apiHandler, string[] args) {",
                             "this.MCC = __apiHandler;",
-                            String.Join("\n", script),
+                            string.Join("\n", script),
                         "}",
-                            String.Join("\n", extensions),
+                            string.Join("\n", extensions),
                         "}}"
                     });
-
-                    //Compile the C# class in memory using all the currently loaded assemblies
                     CSharpCodeProvider compiler = new CSharpCodeProvider();
                     CompilerParameters parameters = new CompilerParameters();
-                    parameters.ReferencedAssemblies
-                        .AddRange(AppDomain.CurrentDomain
-                                .GetAssemblies()
-                                .Where(a => !a.IsDynamic)
-                                .Select(a => a.Location).ToArray());
+                    parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).Select(a => a.Location).ToArray());
                     parameters.CompilerOptions = "/t:library";
                     parameters.GenerateInMemory = true;
                     parameters.ReferencedAssemblies.AddRange(dlls.ToArray());
                     CompilerResults result = compiler.CompileAssemblyFromSource(parameters, code);
-
                     for (int i = 0; i < result.Errors.Count; i++)
                     {
-                        throw new CSharpException(CSErrorType.LoadError,
-                            new InvalidOperationException(result.Errors[i].ErrorText + " | " + result.Errors[i].Line));
+                        throw new CSharpException(CSErrorType.LoadError, new InvalidOperationException(result.Errors[i].ErrorText + " | " + result.Errors[i].Line));
                     }
-
-                    //Retrieve compiled assembly
                     assembly = result.CompiledAssembly;
                     CompileCache[scriptHash] = result.CompiledAssembly;
                 }
                 assembly = CompileCache[scriptHash];
             }
-
-            //Run the compiled assembly with exception handling
             if (run)
             {
                 try
                 {
                     object compiledScript = assembly.CreateInstance("ScriptLoader.Script");
-                    return
-                        compiledScript
-                        .GetType()
-                        .GetMethod("__run")
-                        .Invoke(compiledScript,
-                            new object[] { new CSharpAPI(apiHandler, localVars), args });
+                    return compiledScript.GetType().GetMethod("__run").Invoke(compiledScript, new object[] { new CSharpAPI(apiHandler, localVars), args });
                 }
                 catch (Exception e) { throw new CSharpException(CSErrorType.RuntimeError, e); }
             }
@@ -136,30 +107,18 @@ namespace MacrosAPI_v2
             return hashedValue;
         }
         public enum CSErrorType { FileReadError, InvalidScript, LoadError, RuntimeError };
-
         public class CSharpException : Exception
         {
             private CSErrorType _type;
             public CSErrorType ExceptionType { get { return _type; } }
             public override string Message { get { return InnerException.Message; } }
             public override string ToString() { return InnerException.ToString(); }
-            public CSharpException(CSErrorType type, Exception inner)
-                : base(inner != null ? inner.Message : "", inner)
-            {
-                _type = type;
-            }
+            public CSharpException(CSErrorType type, Exception inner) : base(inner != null ? inner.Message : "", inner) => _type = type;
         }
-
     }
     public class CSharpAPI : Macros
     {
-        public CSharpAPI(Macros apiHandler, Dictionary<string, object> localVars)
-        {
-            SetMaster(apiHandler);
-        }
-        new public void LoadPlugin(Macros bot)
-        {
-            base.LoadPlugin(bot);
-        }
+        public CSharpAPI(Macros apiHandler, Dictionary<string, object> localVars) => SetMaster(apiHandler);
+        new public void LoadPlugin(Macros bot) => base.LoadPlugin(bot);
     }
 }

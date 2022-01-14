@@ -1,8 +1,5 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 using System.Threading;
-
 namespace MacrosAPI_v2
 {
     public class MacrosUpdater
@@ -10,16 +7,9 @@ namespace MacrosAPI_v2
         private Thread driverupdaterkeyboard;
         private Thread driverupdatermouse;
         private Thread updater;
-
         #region Системное
-
         private MacrosManager _handler;
-
-        public void SetHandler(MacrosManager _handler)
-        {
-            this._handler = _handler;
-        }
-
+        public void SetHandler(MacrosManager _handler) => this._handler = _handler;
         public void Stop()
         {
             if (updater != null)
@@ -27,7 +17,6 @@ namespace MacrosAPI_v2
                 updater.Abort();
                 updater = null;
             }
-
             if (driverupdaterkeyboard != null)
             {
                 driverupdaterkeyboard.Abort();
@@ -40,7 +29,6 @@ namespace MacrosAPI_v2
                 driverupdatermouse = null;
             }
         }
-
         public void StartUpdater()
         {
             if (updater == null)
@@ -49,7 +37,6 @@ namespace MacrosAPI_v2
                 updater.Name = "Updater";
                 updater.Start();
             }
-
             if (driverupdaterkeyboard == null)
             {
                 driverupdaterkeyboard = new Thread(DriverUpdaterKB);
@@ -57,7 +44,6 @@ namespace MacrosAPI_v2
                 driverupdaterkeyboard.Priority = ThreadPriority.Highest;
                 driverupdaterkeyboard.Start();
             }
-
             if (driverupdatermouse == null)
             {
                 driverupdatermouse = new Thread(DriverUpdaterMS);
@@ -66,7 +52,6 @@ namespace MacrosAPI_v2
                 driverupdatermouse.Start();
             }
         }
-
         private void Updater()
         {
             try
@@ -79,25 +64,14 @@ namespace MacrosAPI_v2
                     try
                     {
                         _handler.OnUpdate();
-                    }
-                    catch
-                    {
-                    }
-
+                    }catch{ }
                     stopWatch.Stop();
                     var elapsed = stopWatch.Elapsed.Milliseconds;
                     stopWatch.Reset();
                     if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
-            }
-            catch (IOException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-            }
+            }catch{ }
         }
-
         private void DriverUpdaterKB()
         {
             try
@@ -113,15 +87,8 @@ namespace MacrosAPI_v2
                     stopWatch.Reset();
                     if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
-            }
-            catch (IOException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-            }
+            }catch { }
         }
-
         private void DriverUpdaterMS()
         {
             try
@@ -137,15 +104,8 @@ namespace MacrosAPI_v2
                     stopWatch.Reset();
                     if (elapsed < 1) Thread.Sleep(1 - elapsed);
                 }
-            }
-            catch (IOException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-            }
+            }catch { }
         }
-
         #endregion
     }
 }

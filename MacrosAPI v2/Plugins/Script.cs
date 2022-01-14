@@ -13,35 +13,26 @@ namespace MacrosAPI_v2
     public class Script : Macros
     {
         private string file = "";
-        private string[] lines = new string[0];
-        private string[] args = new string[0];
+        private string[] lines = new string[0], args = new string[0];
         private bool csharp;
         private Thread thread;
         private Dictionary<string, object> localVars = new Dictionary<string, object>();
-
-        public Script(FileInfo filename)
-        {
-            file = filename.FullName;
-        }
-
+        public Script(FileInfo filename) => file = filename.FullName;
         public static bool LookForScript(ref string filename)
         {
-            //Automatically look in subfolders and try to add ".txt" file extension
             char dir_slash = MacrosManager.isUsingMono ? '/' : '\\';
             string[] files = new string[]
             {
                 filename
             };
-
             foreach (string possible_file in files)
             {
-                if (System.IO.File.Exists(possible_file))
+                if (File.Exists(possible_file))
                 {
                     filename = possible_file;
                     return true;
                 }
             }
-
             string caller = "Script";
             try
             {
@@ -51,7 +42,6 @@ namespace MacrosAPI_v2
                 caller = type.Name;
             }
             catch { }
-
             return false;
         }
 
@@ -59,36 +49,25 @@ namespace MacrosAPI_v2
         {
             if (LookForScript(ref file))
             {
-                lines = System.IO.File.ReadAllLines(file, Encoding.UTF8);
+                lines = File.ReadAllLines(file, Encoding.UTF8);
                 csharp = file.EndsWith(".cs");
                 thread = null;
-
             }
             else
-            {
                 UnLoadPlugin();
-            }
         }
         public override void Update()
         {
-            if (csharp) //C# compiled script
+            if (csharp)
             {
-                //Initialize thread on first update
                 if (thread == null)
                 {
-                    thread = new Thread(() =>
-                    {
-                        MacrosLoader.Run(this, lines, args, localVars);
-                    });
+                    thread = new Thread(() => MacrosLoader.Run(this, lines, args, localVars));
                     thread.Name = "MCC Script - " + file;
                     thread.Start();
                 }
-
-                //Unload bot once the thread has finished running
                 if (thread != null && !thread.IsAlive)
-                {
                     UnLoadPlugin();
-                }
             }
         }
     }

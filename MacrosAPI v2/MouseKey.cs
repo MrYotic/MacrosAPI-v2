@@ -1,16 +1,9 @@
-﻿// https://ru.wikipedia.org/wiki/Скан-код
-// https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
-// Использовать скан-коды неудобно, так как клавиши посылают последовательности байтов разной длины, а не одно число.
-// Гораздо удобнее преобразовать скан-коды в форму, в которой у каждой клавиши будет уникальный идентификатор.
-// Преобразование очень простое: если последовательность начинается с 0xE0, то к скан-коду прибавляется 0x100
-public enum MouseKey : ushort
+﻿public enum MouseKey : ushort
 {
-    None = 0x00,
-
-    Left = 0x001,
-    Right = 0x002,
-    Middle = 0x003,
-
-    Button1 = 0x004,
-    Button2 = 0x005,
+    None = 0,
+    Left = 1,
+    Right = 2,
+    Middle = 3,
+    Button1 = 4,
+    Button2 = 5,
 }
